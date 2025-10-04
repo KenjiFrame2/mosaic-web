@@ -43,7 +43,7 @@ cd mosaic-generator
 
 ### 2. Собрать образ
 ```bash
-docker compose up --build .
+docker compose up --build
 ```
 
 
