@@ -35,18 +35,20 @@ python app.py
 
 ## Запуск через Docker
 
-### 1. Собрать образ
+### 1. Клонировать проект
 ```bash
-docker build -t mosaic-app .
+git clone https://git.miem.hse.ru/stepa/mosaic-generator.git
+cd mosaic-generator
 ```
 
-### 2. Запустить контейнер
+### 2. Собрать образ
 ```bash
-docker compose up
+docker compose up --build .
 ```
+
 
 Проект будет доступен по адресу:  
-[http://127.0.0.1:5000](http://127.0.0.1:5000)
+[http://127.0.0.1:5010](http://127.0.0.1:5010)
 
 ---
 
