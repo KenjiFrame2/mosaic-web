@@ -1,0 +1,47 @@
+# Виртуальное окружение
+.venv312/
+.venv/
+
+# Сборочные артефакты
+build/
+dist/
+
+# Кэш тайлов
+tiles_cache.json
+host_tiles/
+tiles/
+
+# Временные или тестовые файлы
+input.jpg
+*.zip
+*.tmp
+*.log
+
+# Старый GUI-вариант
+main_gui.py
+main_gui.spec
+
+# Файлы IDE (PyCharm)
+.idea/
+
+# ОС-мусор
+.DS_Store
+Thumbs.db
+
+# Исключить выходные изображения (результаты генерации)
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.webp
+
+# Но явно сохранить нужные директории и важные файлы
+!static/
+!templates/
+!Dockerfile
+!docker-compose.yml
+!requirements.txt
+!README.md
+!AI_USAGE.md
+!app.py
+!main.py

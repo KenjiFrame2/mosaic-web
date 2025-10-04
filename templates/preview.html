@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Предпросмотр мозаики</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container preview">
+    <h1>✅ Мозаика готова!</h1>
+    <img src="{{ image_url }}" alt="Результат мозаики" class="preview-img">
+    <div class="buttons">
+      <a href="{{ url_for('download_result', filename='mosaic_preview.png') }}" class="download-btn">⬇ Скачать</a>
+      <a href="/" class="back-btn">🔄 Создать новую</a>
+    </div>
+  </div>
+</body>
+</html>

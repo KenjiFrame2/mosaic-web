@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мозаичный генератор</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .error-text {
+      color: #e74c3c;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+    #preview {
+      max-width: 250px;
+      margin-top: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧩 Генератор мозаики</h1>
+
+    <form id="mosaicForm" action="/generate" method="post" enctype="multipart/form-data">
+
+      <section>
+        <h2>1️⃣ Исходное изображение</h2>
+        <input type="file" name="input_image" id="input_image" accept="image/*" required>
+        <img id="preview" alt="Предпросмотр" style="display:none;">
+      </section>
+
+      <section>
+        <h2>2️⃣ Тайлы</h2>
+        <label><input type="radio" name="tiles_mode" value="zip" checked> ZIP архив</label>
+        <label><input type="radio" name="tiles_mode" value="images"> Изображения</label>
+        <label><input type="radio" name="tiles_mode" value="folder"> Папка</label>
+
+        <div id="tiles_zip_section">
+          <input type="file" id="tiles_zip" name="tiles_zip" accept=".zip">
+        </div>
+        <div id="tiles_images_section" style="display:none;">
+          <input type="file" id="tiles_images" name="tiles_images" accept="image/*" multiple>
+        </div>
+        <div id="tiles_folder_section" style="display:none;">
+          <input type="file" id="tiles_folder" name="tiles_folder" webkitdirectory directory multiple>
+        </div>
+
+        <div id="tileError" class="error-text"></div>
+      </section>
+
+      <section>
+        <h2>3️⃣ Настройки мозаики</h2>
+        <label>Размер тайла: <input type="number" name="grid" min="1" max="100" step="1" value="30" required></label>
+        <label>Шаг сетки: <input type="number" name="stride" min="1" max="200" step="1"></label>
+        <label><input type="checkbox" name="rotate"> Разрешить поворот</label>
+        <label>Макс. использование тайла: <input type="number" name="max_usage" value="0" min="0" max="1000"></label>
+        <label>Метрика:
+          <select name="metric">
+            <option value="color">Цвет</option>
+            <option value="color+grad">Цвет + градиент</option>
+          </select>
+        </label>
+        <label>Вес градиента: <input type="number" min="0" max="1" step="0.01" name="grad_weight" value="0.5"></label>
+        <label>Коррекция цвета (0–1): <input type="number" min="0" max="1" step="0.01" name="color_correction" value="0"></label>
+        <label>Сглаживание швов (0–1): <input type="number" min="0" max="1" step="0.01" name="seam_smoothing" value="0"></label>
+        <label>Смешивание с исходником (0–1): <input type="number" step="0.01" name="blend" min="0" max="1" value="0"></label>
+      </section>
+
+      <button type="submit" class="generate-btn">Создать мозаику</button>
+    </form>
+  </div>
+
+<script>
+  // предпросмотр исходного изображения
+  const inputImage = document.getElementById('input_image');
+  const preview = document.getElementById('preview');
+  inputImage.addEventListener('change', () => {
+    const file = inputImage.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.style.display = 'block';
+      preview.onload = () => URL.revokeObjectURL(url);
+    } else {
+      preview.style.display = 'none';
+    }
+  });
+
+  // переключение режима выбора тайлов
+  const radios = document.querySelectorAll('input[name="tiles_mode"]');
+  const zipSection = document.getElementById('tiles_zip_section');
+  const imgSection = document.getElementById('tiles_images_section');
+  const folderSection = document.getElementById('tiles_folder_section');
+  radios.forEach(r => {
+    r.addEventListener('change', () => {
+      zipSection.style.display = r.value === 'zip' ? 'block' : 'none';
+      imgSection.style.display = r.value === 'images' ? 'block' : 'none';
+      folderSection.style.display = r.value === 'folder' ? 'block' : 'none';
+    });
+  });
+
+  // проверка и сообщение о запуске генерации
+  const form = document.getElementById("mosaicForm");
+  const generateBtn = document.querySelector(".generate-btn");
+  const tileError = document.getElementById("tileError");
+
+  const loadingMsg = document.createElement("div");
+  loadingMsg.textContent = "⏳ Генерация мозаики... Пожалуйста, подождите.";
+  loadingMsg.style.display = "none";
+  loadingMsg.style.marginTop = "10px";
+  loadingMsg.style.color = "#555";
+  loadingMsg.style.fontStyle = "italic";
+  form.appendChild(loadingMsg);
+
+  form.addEventListener("submit", function(e) {
+    tileError.textContent = "";
+    let valid = true;
+    const mode = document.querySelector('input[name="tiles_mode"]:checked').value;
+    if (mode === "zip" && document.getElementById("tiles_zip").files.length === 0) {
+      tileError.textContent = "Загрузите ZIP архив с тайлами.";
+      valid = false;
+    }
+    if (mode === "images" && document.getElementById("tiles_images").files.length === 0) {
+      tileError.textContent = "Выберите хотя бы одно изображение.";
+      valid = false;
+    }
+    if (mode === "folder" && document.getElementById("tiles_folder").files.length === 0) {
+      tileError.textContent = "Выберите папку с тайлами.";
+      valid = false;
+    }
+
+    if (!valid) {
+      e.preventDefault();
+      return;
+    }
+
+    // показываем сообщение и блокируем кнопку
+    generateBtn.disabled = true;
+    generateBtn.textContent = "⏳ Генерация...";
+    loadingMsg.style.display = "block";
+  });
+</script>
+
+</body>
+</html>
